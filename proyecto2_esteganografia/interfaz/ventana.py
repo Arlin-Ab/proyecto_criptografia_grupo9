@@ -35,6 +35,8 @@ C_CELDA        = "#1e293b"
 C_CELDA_BORDE  = "#475569"
 C_HUECO        = "#7c3aed"
 C_HUECO_BORDE  = "#a78bfa"
+C_ROTACION     = "#0f3a2e"
+C_ROTACION_BORDE = "#10b981"
 C_SECRETO_BG   = "#7c3aed"   # fondo de letra secreta en el Text widget
 C_SECRETO_FG   = "#ffffff"   # letra secreta
 C_NORMAL_BG    = "#1e293b"   # fondo de letra normal
@@ -58,6 +60,8 @@ class AplicacionEsteganografia(tk.Tk):
         # Estado
         self.n = tk.IntVar(value=4)
         self.huecos = set()
+        self.huecos_rotados = set()
+        self._rotaciones_por_angulo = {}
         self.mostrar_resaltado = tk.BooleanVar(value=True)
         self._chars_actuales = []       # lista de n² chars del resultado
         self._posiciones_actuales = []  # posiciones secretas actuales
@@ -155,6 +159,7 @@ class AplicacionEsteganografia(tk.Tk):
         leyenda = tk.Frame(parent, bg=C_PANEL)
         leyenda.pack(fill=tk.X)
         self._leyenda(leyenda, C_HUECO, "Hueco (posición secreta)")
+        self._leyenda(leyenda, C_ROTACION, "Rotación 90°/180°/270°")
         self._leyenda(leyenda, C_CELDA, "Celda normal (relleno)")
 
     def _construir_notebook(self, parent):
@@ -412,6 +417,9 @@ class AplicacionEsteganografia(tk.Tk):
                 if celda in self.huecos:
                     fill = C_HUECO
                     borde = C_HUECO_BORDE
+                elif celda in self.huecos_rotados:
+                    fill = C_ROTACION
+                    borde = C_ROTACION_BORDE
                 else:
                     fill = C_CELDA
                     borde = C_CELDA_BORDE
@@ -429,6 +437,17 @@ class AplicacionEsteganografia(tk.Tk):
                     fill="#64748b" if celda not in self.huecos else "#c4b5fd",
                     font=("Segoe UI", 8)
                 )
+
+                # Etiqueta de rotación en celdas fantasma
+                if celda in self.huecos_rotados:
+                    angulo_label = self._angulo_de_celda_rotada(celda)
+                    if angulo_label:
+                        self.canvas.create_text(
+                            (x1 + x2) / 2, (y1 + y2) / 2,
+                            text=angulo_label,
+                            fill=C_ROTACION_BORDE,
+                            font=("Segoe UI", 8, "bold")
+                        )
 
         # Números de fila y columna
         for i in range(n):
@@ -456,6 +475,7 @@ class AplicacionEsteganografia(tk.Tk):
                 self.huecos.discard(celda)
             else:
                 self.huecos.add(celda)
+            self._actualizar_rotaciones_preview()
             self._dibujar_rejilla()
             self._actualizar_info_rejilla()
 
@@ -476,6 +496,8 @@ class AplicacionEsteganografia(tk.Tk):
 
     def _cambiar_tamano(self):
         self.huecos.clear()
+        self.huecos_rotados.clear()
+        self._rotaciones_por_angulo = {}
         self._chars_actuales = []
         self._posiciones_actuales = []
         self._dibujar_rejilla()
@@ -485,11 +507,14 @@ class AplicacionEsteganografia(tk.Tk):
     def _generar_rejilla(self):
         n = self.n.get()
         self.huecos = generar_rejilla_valida(n)
+        self._actualizar_rotaciones_preview()
         self._dibujar_rejilla()
         self._actualizar_info_rejilla()
 
     def _limpiar_huecos(self):
         self.huecos.clear()
+        self.huecos_rotados.clear()
+        self._rotaciones_por_angulo = {}
         self._chars_actuales = []
         self._posiciones_actuales = []
         self._dibujar_rejilla()
@@ -521,10 +546,39 @@ class AplicacionEsteganografia(tk.Tk):
                 huecos, n = cargar_configuracion(ruta)
                 self.n.set(n)
                 self.huecos = huecos
+                self._actualizar_rotaciones_preview()
                 self._dibujar_rejilla()
                 self._actualizar_info_rejilla()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo cargar:\n{e}")
+
+    def _actualizar_rotaciones_preview(self):
+        """
+        Calcula y resalta las celdas que ocupan los huecos al rotar
+        90°, 180° y 270° para vista previa.
+        """
+        from logica.steganografia import obtener_todas_rotaciones
+        n = self.n.get()
+        self.huecos_rotados = set()
+        self._rotaciones_por_angulo = {}
+
+        if not self.huecos:
+            return
+
+        rotaciones = obtener_todas_rotaciones(self.huecos, n)
+        angulos = [90, 180, 270]
+
+        for idx, rot in enumerate(rotaciones[1:]):
+            angulo_str = f"{angulos[idx]}°"
+            for celda in rot:
+                if celda not in self.huecos:
+                    self.huecos_rotados.add(celda)
+                    if celda not in self._rotaciones_por_angulo:
+                        self._rotaciones_por_angulo[celda] = angulo_str
+
+    def _angulo_de_celda_rotada(self, celda):
+        """Devuelve el ángulo de rotación que produce esta celda, o None."""
+        return self._rotaciones_por_angulo.get(celda)
 
     def _toggle_modo_cobertura(self):
         es_manual = self.modo_cobertura.get() == "manual"
