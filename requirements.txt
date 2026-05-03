@@ -1,0 +1,12 @@
+# Dependencias del proyecto de criptografía - Grupo 9
+# Python 3.10+
+# Instalación: pip install -r requirements.txt
+
+# Tests unitarios (requerido por la rúbrica)
+pytest>=7.0.0
+
+# Interfaz gráfica moderna (opcional, usado en proyectos 1-4)
+# customtkinter>=5.2.0
+
+# Animaciones (opcional para alternativa PyGame en proyecto 5)
+# pygame>=2.5.0
