@@ -306,7 +306,7 @@ class AplicacionRejilla(tk.Tk):
         n = self.n.get()
         tam = TAMANIO_CELDA
         offset_x = PADDING_CANVAS
-        offset_y = PADDING_CANVAS + 30  # espacio para el indicador de rotación
+        offset_y = PADDING_CANVAS + 50  # espacio para el indicador de rotación
 
         # Indicador de rotación
         self.canvas.create_text(
