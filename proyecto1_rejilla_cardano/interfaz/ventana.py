@@ -432,7 +432,7 @@ class AplicacionRejilla(tk.Tk):
         n = self.n.get()
         tam = TAMANIO_CELDA
         offset_x = PADDING_CANVAS
-        offset_y = PADDING_CANVAS + 30
+        offset_y = PADDING_CANVAS + 50
 
         col = (event.x - offset_x) // tam
         fila = (event.y - offset_y) // tam
