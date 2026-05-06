@@ -131,7 +131,7 @@ def generar_rejilla_valida(n):
                     grupo.append(actual)
                 grupo_set = set(grupo)
                 if len(grupo_set) == 4 and not grupo_set.intersection(visitadas):
-                    huecos.add(celda)
+                    huecos.add(random.choice(grupo))
                     visitadas.update(grupo_set)
     return huecos
 

@@ -2,6 +2,7 @@
 # Implementa la creación, validación, rotación y cifrado/descifrado
 
 import json
+import random
 
 
 def rotar_rejilla_90(rejilla, n):
@@ -177,10 +178,10 @@ def generar_rejilla_ejemplo(n):
                     actual = (actual[1], n - 1 - actual[0])
                     grupo.append(actual)
 
-                # Si todas las rotaciones son distintas y no visitadas, usar esta celda
+                # Si todas las rotaciones son distintas y no visitadas, elegir una al azar
                 grupo_set = set(grupo)
                 if len(grupo_set) == 4 and not grupo_set.intersection(visitadas):
-                    huecos.add(celda)
+                    huecos.add(random.choice(grupo))
                     visitadas.update(grupo_set)
 
     return huecos
