@@ -195,6 +195,23 @@ class AplicacionPolybiosClave(tk.Tk):
         self._btn_s(f_b, "🔒 Cifrar",   self._cifrar,   tk.LEFT)
         self._btn_s(f_b, "🔓 Descifrar", self._descifrar, tk.LEFT)
 
+        # ── Animación esencial ──
+        self._lbl_sec(parent, "ANIMACIÓN", C_PANEL)
+
+        f_anim_constr = tk.Frame(parent, bg=C_PANEL)
+        f_anim_constr.pack(fill=tk.X, pady=1)
+        tk.Label(f_anim_constr, text="Construcción:", bg=C_PANEL, fg=C_SUB,
+                 font=("Segoe UI", 9)).pack(side=tk.LEFT)
+        self._btn_s(f_anim_constr, "▶ Paso",   self._paso_constr_btn, tk.LEFT)
+        self._btn_s(f_anim_constr, "▶▶ Animar", self._animar_constr,   tk.LEFT)
+
+        f_anim_cif = tk.Frame(parent, bg=C_PANEL)
+        f_anim_cif.pack(fill=tk.X, pady=1)
+        tk.Label(f_anim_cif, text="Cifrado:", bg=C_PANEL, fg=C_SUB,
+                 font=("Segoe UI", 9)).pack(side=tk.LEFT)
+        self._btn_s(f_anim_cif, "▶ Paso",   self._paso_cif_btn, tk.LEFT)
+        self._btn_s(f_anim_cif, "▶▶ Animar", self._animar_cif,   tk.LEFT)
+
         # Resultado
         self._lbl_sec(parent, "RESULTADO", C_PANEL)
         self.lbl_resultado = tk.Label(
