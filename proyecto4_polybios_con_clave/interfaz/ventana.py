@@ -516,6 +516,24 @@ class AplicacionPolybiosClave(tk.Tk):
             return ""
         return text_widget.get("1.0", tk.END).strip()
 
+    def _celda_label_display(self, celda):
+        """Etiqueta visual de celda según el modo (ej. I -> IJ en 5x5 IJ)."""
+        if not celda:
+            return ""
+        modo_key = self._modo_key.get()
+        display_map = MODOS.get(modo_key, {}).get('celda_display', {})
+        return display_map.get(celda, celda)
+
+    def _token_descifrado_display(self, celda):
+        """
+        Formatea la letra descifrada para mostrar ambigüedades en celdas fusionadas.
+        Ejemplo: 'IJ' -> 'I/J' o 'I' (que se visualiza como 'IJ') -> 'I/J'
+        """
+        label = self._celda_label_display(celda)
+        if len(label) > 1:
+            return "/".join(label)
+        return label
+
     # ──────────────────────────────────────────────
     # Dibujo de cuadrículas
     # ──────────────────────────────────────────────
@@ -913,7 +931,10 @@ class AplicacionPolybiosClave(tk.Tk):
         self._paso_des   = 0
         self._animando_d = False
 
-        self.lbl_resultado.config(text=f"Descifrado: {descifrado}")
+        # En celdas fusionadas (ej. IJ), mostramos ambigüedad explícita: I/J
+        tokens_display = [self._token_descifrado_display(p['celda']) for p in pasos]
+        descifrado_display = " ".join(tokens_display) if tokens_display else descifrado
+        self.lbl_resultado.config(text=f"Descifrado: {descifrado_display}")
         self.lbl_omitidos.config(
             text=f"⚠ Tokens no reconocidos: {', '.join(errores)}" if errores else ""
         )
@@ -927,12 +948,15 @@ class AplicacionPolybiosClave(tk.Tk):
         if modo == 'cifrar':
             for p in pasos:
                 self.tabla.insert("", tk.END, values=(
-                    p['letra'], p['celda'], p['fila']+1, p['col']+1, p['coord']
+                    p['letra'], self._celda_label_display(p['celda']),
+                    p['fila']+1, p['col']+1, p['coord']
                 ))
         else:
             for p in pasos:
                 self.tabla.insert("", tk.END, values=(
-                    p['coord'], p['celda'], p['fila']+1, p['col']+1, p['letra']
+                    p['coord'], self._celda_label_display(p['celda']),
+                    p['fila']+1, p['col']+1,
+                    self._token_descifrado_display(p['celda'])
                 ))
 
     def _resaltar_tabla(self, idx):
