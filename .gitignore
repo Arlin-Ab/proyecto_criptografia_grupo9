@@ -48,3 +48,5 @@ coverage.xml
 .idea/
 Thumbs.db
 desktop.ini
+
+/proyecto5_wheatstone/playfair.py
