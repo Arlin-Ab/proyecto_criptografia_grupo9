@@ -12,6 +12,8 @@ from logica.steganografia import (
     chars_a_texto_resaltado,
     texto_a_parrafo,
     parrafo_a_chars,
+    parrafo_a_chars_con_espacios,
+    chars_a_texto_con_espacios,
     guardar_configuracion,
     cargar_configuracion,
     obtener_posiciones_lineales,
@@ -75,6 +77,9 @@ class AplicacionEsteganografia(tk.Tk):
 
         # Fix limitación 3: texto original del usuario en "Revelar"
         self._texto_original_revelar = ""
+
+        # Espaciado del texto de cobertura manual (preservar estructura original)
+        self._espacios_ocultar = None   # set de índices con espacio, o None en modo auto
 
         self._construir_ui()
         self._dibujar_rejilla()
@@ -618,6 +623,7 @@ class AplicacionEsteganografia(tk.Tk):
 
         modo = self.modo_cobertura.get()
         texto_manual = None
+        espacios_originales = None
         if modo == "manual":
             texto_manual = self.text_cobertura_in.get("1.0", tk.END).strip()
             if not texto_manual:
@@ -626,9 +632,10 @@ class AplicacionEsteganografia(tk.Tk):
                     "Escribe el texto de cobertura en el campo correspondiente."
                 )
                 return
+            # Capturar espaciado original ANTES de procesar
+            _, espacios_originales = parrafo_a_chars_con_espacios(texto_manual)
             # Limitación 4: avisar si el texto es demasiado corto antes de mezclar
-            from logica.steganografia import parrafo_a_chars as _p2c
-            chars_disponibles = len(_p2c(texto_manual))
+            chars_disponibles = len(parrafo_a_chars(texto_manual))
             total_necesario = n * n
             if chars_disponibles < total_necesario:
                 faltan = total_necesario - chars_disponibles
@@ -649,6 +656,7 @@ class AplicacionEsteganografia(tk.Tk):
 
         self._chars_ocultar = chars
         self._pos_ocultar = posiciones
+        self._espacios_ocultar = espacios_originales  # None en modo auto
 
         # Mostrar advertencias
         if advertencias:
@@ -656,8 +664,11 @@ class AplicacionEsteganografia(tk.Tk):
         else:
             self.lbl_adv.config(text=f"✓ Mensaje '{msg_usado}' ocultado correctamente.")
 
-        # Formato del texto con espacios (para lectura natural)
-        texto_formateado = texto_a_parrafo(chars, n, palabras=True)
+        # Formato del texto respetando espaciado original (manual) o semilla fija (auto)
+        if espacios_originales is not None:
+            texto_formateado = chars_a_texto_con_espacios(chars, espacios_originales)
+        else:
+            texto_formateado = texto_a_parrafo(chars, n, palabras=True)
 
         # Mostrar en el widget de resultado
         self._poblar_texto_resaltado(
@@ -738,7 +749,10 @@ class AplicacionEsteganografia(tk.Tk):
         if not hasattr(self, '_chars_ocultar') or not self._chars_ocultar:
             return
         n = self.n.get()
-        texto_formateado = texto_a_parrafo(self._chars_ocultar, n, palabras=True)
+        if self._espacios_ocultar is not None:
+            texto_formateado = chars_a_texto_con_espacios(self._chars_ocultar, self._espacios_ocultar)
+        else:
+            texto_formateado = texto_a_parrafo(self._chars_ocultar, n, palabras=True)
         self._poblar_texto_resaltado(
             self.text_resultado_ocultar,
             texto_formateado,

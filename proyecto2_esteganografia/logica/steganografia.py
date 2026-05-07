@@ -164,48 +164,69 @@ def _generar_cadena_palabras(longitud):
     return resultado[:longitud]
 
 
-def generar_cobertura_automatica(posiciones_secretas, mensaje_limpio, n):
-    """
-    Genera un texto de cobertura de n² caracteres donde:
-    - Las posiciones indicadas contienen las letras del mensaje secreto.
-    - El resto está relleno con texto de aspecto español natural.
-
-    Retorna una lista de n² caracteres.
-    """
-    total = n * n
-    # Generar relleno con distribución de letras españolas
-    relleno = list(_generar_cadena_silabas(total))
-
-    # Insertar letras secretas en las posiciones correspondientes
-    for i, pos in enumerate(posiciones_secretas):
-        if i < len(mensaje_limpio):
-            relleno[pos] = mensaje_limpio[i].upper()
-        # Si el mensaje es más corto que los huecos, los huecos extra quedan como relleno
-
-    return relleno
 
 
 def texto_a_parrafo(chars_lista, n, palabras=True):
     """
     Convierte la lista de n² caracteres a un string de texto.
-    Si palabras=True, inserta espacios cada ciertos caracteres
-    para que parezca texto natural con palabras.
+    Si palabras=True, inserta espacios cada 3-6 caracteres.
+    Garantiza que ningún fragmento quede con menos de 3 letras.
     """
     texto = ''.join(chars_lista)
     if not palabras:
         return texto
 
-    # Dividir en "palabras" de longitud variable (3-6 letras)
     resultado = []
     i = 0
-    random.seed(42)  # semilla fija para consistencia
+    random.seed(42)
     while i < len(texto):
+        restantes = len(texto) - i
+        if restantes <= 6:
+            resultado.append(texto[i:])
+            break
         largo = random.randint(3, 6)
+        # Absorber el sobrante si dejaría menos de 3 letras sueltas al final
+        sobrante = restantes - largo
+        if 0 < sobrante < 3:
+            largo = restantes
         resultado.append(texto[i:i + largo])
         i += largo
-    random.seed()  # restablecer aleatoriedad
+    random.seed()
 
     return ' '.join(resultado)
+
+
+def parrafo_a_chars_con_espacios(parrafo):
+    """
+    Como parrafo_a_chars, pero también registra los índices (en el array
+    de solo letras) tras los cuales había un espacio en el texto original.
+
+    Retorna:
+        chars           : list de caracteres alfabéticos en mayúsculas
+        espacios_despues: set de índices tras los cuales va un espacio
+    """
+    chars = []
+    espacios_despues = set()
+    for c in parrafo:
+        if c.isalpha():
+            chars.append(c.upper())
+        elif c in (' ', '\n', '\t') and chars:
+            espacios_despues.add(len(chars) - 1)
+    return chars, espacios_despues
+
+
+def chars_a_texto_con_espacios(chars, espacios_despues):
+    """
+    Reconstruye el texto insertando espacios después de los índices indicados.
+    Úsalo para mostrar el texto de cobertura respetando la estructura
+    de palabras del texto manual original.
+    """
+    resultado = []
+    for i, c in enumerate(chars):
+        resultado.append(c)
+        if i in espacios_despues:
+            resultado.append(' ')
+    return ''.join(resultado)
 
 
 def parrafo_a_chars(parrafo):
@@ -260,8 +281,8 @@ def ocultar_mensaje(mensaje_secreto, huecos, n, texto_manual=None):
 
     total = n * n
 
+    # Construir base de cobertura (sin secreto aún)
     if texto_manual:
-        # Modo manual: el usuario proporciona el texto de cobertura
         chars_cobertura = parrafo_a_chars(texto_manual)
         if len(chars_cobertura) < total:
             advertencias.append(
@@ -271,15 +292,12 @@ def ocultar_mensaje(mensaje_secreto, huecos, n, texto_manual=None):
             chars_cobertura += list(_generar_cadena_silabas(total - len(chars_cobertura)))
         chars_final = chars_cobertura[:total]
     else:
-        # Modo automático: generar relleno
-        chars_final = generar_cobertura_automatica(posiciones, mensaje_sin_espacios, n)
-        return chars_final, posiciones, mensaje_sin_espacios, advertencias
+        chars_final = list(_generar_cadena_silabas(total))
 
-    # Insertar el mensaje secreto en las posiciones de los huecos
+    # Insertar el mensaje secreto en las posiciones de los huecos (igual en ambos modos)
     for i, pos in enumerate(posiciones):
         if i < len(mensaje_sin_espacios):
             chars_final[pos] = mensaje_sin_espacios[i]
-        # posiciones extra: mantienen el carácter original del texto de cobertura
 
     return chars_final, posiciones, mensaje_sin_espacios, advertencias
 
