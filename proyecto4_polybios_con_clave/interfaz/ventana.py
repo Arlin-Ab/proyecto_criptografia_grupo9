@@ -120,6 +120,11 @@ class AplicacionPolybiosClave(tk.Tk):
         der = tk.Frame(main, bg=C_PANEL, padx=10, pady=10, width=420)
         der.pack(side=tk.LEFT, fill=tk.Y)
         der.pack_propagate(False)
+        self.panel_der = der
+        self._ancho_panel_der_expandido = 420
+        self._ancho_panel_der_colapsado = 220
+        self._alto_panel_der_expandido = 680
+        self._alto_panel_der_colapsado = 58
         self._construir_col_der(der)
 
     # ── Columna izquierda: configuración y cifrado ──
@@ -241,11 +246,11 @@ class AplicacionPolybiosClave(tk.Tk):
         style.theme_use("clam")
         style.configure("P4.Treeview",
                         background=C_PANEL, foreground=C_TEXTO,
-                        fieldbackground=C_PANEL, rowheight=22,
-                        font=("Courier New", 9))
+                        fieldbackground=C_PANEL, rowheight=30,
+                        font=("Courier New", 20, "bold"))
         style.configure("P4.Treeview.Heading",
                         background=C_ACENTO, foreground="#fff",
-                        font=("Segoe UI", 9, "bold"))
+                        font=("Segoe UI", 15, "bold"))
         style.map("P4.Treeview", background=[("selected", "#0891b2")])
 
         sb = tk.Scrollbar(f, bg=C_PANEL)
@@ -266,25 +271,31 @@ class AplicacionPolybiosClave(tk.Tk):
     # ── Columna derecha: comparación y seguridad ──
 
     def _construir_col_der(self, parent):
-        style = ttk.Style()
-        style.configure("P4.TNotebook", background=C_PANEL, borderwidth=0)
-        style.configure("P4.TNotebook.Tab", background=C_PANEL2,
-                        foreground=C_TEXTO, padding=(10, 5),
-                        font=("Segoe UI", 9))
-        style.map("P4.TNotebook.Tab",
-                  background=[("selected", C_ACENTO)],
-                  foreground=[("selected", "#fff")])
+        self._panel_der_activo = None
 
-        nb = ttk.Notebook(parent, style="P4.TNotebook")
-        nb.pack(fill=tk.BOTH, expand=True)
+        self.barra_panel_der = tk.Frame(parent, bg=C_PANEL)
+        self.barra_panel_der.pack(fill=tk.X, pady=(0, 6))
 
-        tab_comp = tk.Frame(nb, bg=C_PANEL, padx=8, pady=8)
-        nb.add(tab_comp, text="⚖  Comparación")
-        self._construir_tab_comparacion(tab_comp)
+        self.btn_panel_comp = tk.Button(
+            self.barra_panel_der, text="⚖  Comparación", command=lambda: self._toggle_panel_der("comp"),
+            bg=C_PANEL2, fg=C_TEXTO, activebackground=C_ACENTO, activeforeground="#ffffff",
+            font=("Segoe UI", 9), relief=tk.FLAT, padx=10, pady=5, cursor="hand2"
+        )
+        self.btn_panel_comp.pack(side=tk.LEFT, padx=(0, 3))
 
-        tab_seg = tk.Frame(nb, bg=C_PANEL, padx=8, pady=8)
-        nb.add(tab_seg, text="🔐  Seguridad")
-        self._construir_tab_seguridad(tab_seg)
+        self.btn_panel_seg = tk.Button(
+            self.barra_panel_der, text="🔐  Seguridad", command=lambda: self._toggle_panel_der("seg"),
+            bg=C_PANEL2, fg=C_TEXTO, activebackground=C_ACENTO, activeforeground="#ffffff",
+            font=("Segoe UI", 9), relief=tk.FLAT, padx=10, pady=5, cursor="hand2"
+        )
+        self.btn_panel_seg.pack(side=tk.LEFT)
+
+        self.frame_panel_comp = tk.Frame(parent, bg=C_PANEL, padx=8, pady=8)
+        self._construir_tab_comparacion(self.frame_panel_comp)
+        self.frame_panel_seg = tk.Frame(parent, bg=C_PANEL, padx=8, pady=8)
+        self._construir_tab_seguridad(self.frame_panel_seg)
+        self._actualizar_botones_panel_der()
+        self.after_idle(self._calibrar_panel_der)
 
     def _construir_tab_comparacion(self, parent):
         """Dos cuadrículas apiladas verticalmente: estándar (arriba) vs con clave (abajo)."""
@@ -421,6 +432,59 @@ class AplicacionPolybiosClave(tk.Tk):
     # ──────────────────────────────────────────────
     # Helpers de UI
     # ──────────────────────────────────────────────
+
+    def _toggle_panel_der(self, panel):
+        if panel == self._panel_der_activo:
+            if panel == "comp":
+                self.frame_panel_comp.pack_forget()
+            else:
+                self.frame_panel_seg.pack_forget()
+            self._panel_der_activo = None
+            self._actualizar_botones_panel_der()
+            self._ajustar_dimension_panel_der(expandido=False)
+            return
+
+        self.frame_panel_comp.pack_forget()
+        self.frame_panel_seg.pack_forget()
+
+        if panel == "comp":
+            self.frame_panel_comp.pack(fill=tk.BOTH, expand=True)
+        else:
+            self.frame_panel_seg.pack(fill=tk.BOTH, expand=True)
+
+        self._panel_der_activo = panel
+        self._actualizar_botones_panel_der()
+        self._ajustar_dimension_panel_der(expandido=True)
+
+    def _calibrar_panel_der(self):
+        self.update_idletasks()
+        ancho_botones = self.barra_panel_der.winfo_reqwidth()
+        alto_botones = self.barra_panel_der.winfo_reqheight()
+        self._ancho_panel_der_colapsado = max(190, ancho_botones + 8)
+        self._alto_panel_der_colapsado = max(50, alto_botones + 12)
+        self._ajustar_dimension_panel_der(expandido=False)
+
+    def _ajustar_dimension_panel_der(self, expandido):
+        if expandido:
+            self.panel_der.config(width=self._ancho_panel_der_expandido,
+                                  height=self._alto_panel_der_expandido)
+            self.panel_der.pack_configure(fill=tk.Y, anchor=tk.N)
+        else:
+            self.panel_der.config(width=self._ancho_panel_der_colapsado,
+                                  height=self._alto_panel_der_colapsado)
+            self.panel_der.pack_configure(fill=tk.NONE, anchor=tk.N)
+
+    def _actualizar_botones_panel_der(self):
+        comp_activo = self._panel_der_activo == "comp"
+        seg_activo = self._panel_der_activo == "seg"
+        self.btn_panel_comp.config(
+            bg=C_ACENTO if comp_activo else C_PANEL2,
+            fg="#ffffff" if comp_activo else C_TEXTO
+        )
+        self.btn_panel_seg.config(
+            bg=C_ACENTO if seg_activo else C_PANEL2,
+            fg="#ffffff" if seg_activo else C_TEXTO
+        )
 
     def _lbl_sec(self, parent, texto, bg):
         tk.Label(parent, text=texto, bg=bg, fg=C_ACENTO,
