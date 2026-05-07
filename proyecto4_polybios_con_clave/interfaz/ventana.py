@@ -143,11 +143,11 @@ class AplicacionPolybiosClave(tk.Tk):
         f_clave = tk.Frame(parent, bg=C_PANEL)
         f_clave.pack(fill=tk.X, pady=4)
         self.entry_clave = tk.Entry(
-            f_clave, bg=C_CELDA, fg=C_TEXTO, insertbackground=C_TEXTO,
+            f_clave, bg="#ffffff", fg="#0f172a", insertbackground="#0f172a",
             font=("Segoe UI", 13, "bold"), relief=tk.FLAT, width=14
         )
         self.entry_clave.pack(side=tk.LEFT, padx=(0, 4))
-        self.entry_clave.insert(0, "CRYPTO")
+        self._setup_entry_placeholder(self.entry_clave, "Ej: CRYPTO")
         self.entry_clave.bind("<Return>", lambda e: self._generar_grid())
 
         self._btn_destac(f_clave, "⚙ Generar", self._generar_grid, C_BTN2)
@@ -178,32 +178,17 @@ class AplicacionPolybiosClave(tk.Tk):
         tk.Label(parent, text="Texto plano:", bg=C_PANEL, fg=C_TEXTO,
                  font=("Segoe UI", 9)).pack(anchor=tk.W)
         self.entry_plano = tk.Text(
-            parent, height=3, bg=C_CELDA, fg=C_TEXTO,
-            insertbackground=C_TEXTO, font=("Segoe UI", 10),
+            parent, height=3, bg="#ffffff", fg="#0f172a",
+            insertbackground="#0f172a", font=("Segoe UI", 10),
             relief=tk.FLAT, padx=6, pady=4
         )
         self.entry_plano.pack(fill=tk.X, pady=(2, 4))
+        self._setup_text_placeholder(self.entry_plano, "Ej: HOLA o 23 34 31 11")
 
         f_b = tk.Frame(parent, bg=C_PANEL)
         f_b.pack(fill=tk.X, pady=2)
         self._btn_s(f_b, "🔒 Cifrar",   self._cifrar,   tk.LEFT)
         self._btn_s(f_b, "🔓 Descifrar", self._descifrar, tk.LEFT)
-
-        f_b2 = tk.Frame(parent, bg=C_PANEL)
-        f_b2.pack(fill=tk.X, pady=2)
-        self._btn_s(f_b2, "▶ Paso", self._paso_cif_btn, tk.LEFT)
-        self._btn_s(f_b2, "▶▶ Auto", self._animar_cif,  tk.LEFT)
-        self._btn_s(f_b2, "⏮",      self._reset_cif,    tk.LEFT)
-
-        # Velocidad
-        f_vel = tk.Frame(parent, bg=C_PANEL)
-        f_vel.pack(fill=tk.X, pady=2)
-        tk.Label(f_vel, text="Vel:", bg=C_PANEL, fg=C_SUB,
-                 font=("Segoe UI", 9)).pack(side=tk.LEFT)
-        tk.Scale(f_vel, from_=150, to=2000, orient=tk.HORIZONTAL,
-                 variable=self._velocidad, bg=C_PANEL, fg=C_TEXTO,
-                 highlightthickness=0, troughcolor=C_CELDA,
-                 length=160).pack(side=tk.LEFT)
 
         # Resultado
         self._lbl_sec(parent, "RESULTADO", C_PANEL)
@@ -218,7 +203,7 @@ class AplicacionPolybiosClave(tk.Tk):
         )
         self.lbl_omitidos.pack(anchor=tk.W)
 
-    # ── Columna central: cuadrícula con animación ──
+    # ── Columna central: cuadrícula principal ──
 
     def _construir_col_centro(self, parent):
         # Título de la cuadrícula activa
@@ -237,21 +222,11 @@ class AplicacionPolybiosClave(tk.Tk):
         self.canvas_main = tk.Canvas(f_canvas, bg=C_FONDO, highlightthickness=0)
         self.canvas_main.pack()
 
-        # Controles de construcción animada
-        f_constr = tk.Frame(parent, bg=C_FONDO, pady=6)
-        f_constr.pack(fill=tk.X)
-        tk.Label(f_constr, text="Animación de construcción:",
-                 bg=C_FONDO, fg=C_SUB, font=("Segoe UI", 9)).pack(side=tk.LEFT)
-        self._btn_s(f_constr, "▶ Paso", self._paso_constr_btn, tk.LEFT)
-        self._btn_s(f_constr, "▶▶ Auto", self._animar_constr,  tk.LEFT)
-        self._btn_s(f_constr, "⏮",      self._reset_constr,    tk.LEFT)
-
         # Leyenda
         leyenda = tk.Frame(parent, bg=C_FONDO)
         leyenda.pack(anchor=tk.W, pady=4)
         self._leyenda(leyenda, C_CLAVE_BG,  C_CLAVE_BRD, "Letra de la clave")
         self._leyenda(leyenda, C_FILL_BG,   C_FILL_BRD,  "Relleno alfabético")
-        self._leyenda(leyenda, C_ACTIVA,    C_ACTIVA_BRD,"Letra activa (animación cif.)")
 
         # Tabla de pasos de cifrado/descifrado
         self._lbl_sec_fondo(parent, "PASOS DEL CIFRADO / DESCIFRADO", C_FONDO)
@@ -482,6 +457,65 @@ class AplicacionPolybiosClave(tk.Tk):
         tk.Label(f, text=texto, bg=parent.cget("bg"), fg=C_SUB,
                  font=("Segoe UI", 8)).pack(side=tk.LEFT, padx=2)
 
+    def _setup_entry_placeholder(self, entry, texto):
+        """Configura placeholder básico para Entry."""
+        entry.placeholder_text = texto
+        entry.placeholder_activo = True
+        entry.config(fg=C_SUB)
+        entry.delete(0, tk.END)
+        entry.insert(0, texto)
+        entry.bind("<FocusIn>", lambda e: self._entry_focus_in(e.widget))
+        entry.bind("<FocusOut>", lambda e: self._entry_focus_out(e.widget))
+
+    def _entry_focus_in(self, entry):
+        if getattr(entry, "placeholder_activo", False):
+            entry.delete(0, tk.END)
+            entry.config(fg="#0f172a")
+            entry.placeholder_activo = False
+
+    def _entry_focus_out(self, entry):
+        if not entry.get().strip():
+            entry.delete(0, tk.END)
+            entry.insert(0, entry.placeholder_text)
+            entry.config(fg=C_SUB)
+            entry.placeholder_activo = True
+
+    def _setup_text_placeholder(self, text_widget, texto):
+        """Configura placeholder básico para Text."""
+        text_widget.placeholder_text = texto
+        text_widget.placeholder_activo = True
+        text_widget.config(fg=C_SUB)
+        text_widget.delete("1.0", tk.END)
+        text_widget.insert("1.0", texto)
+        text_widget.bind("<FocusIn>", lambda e: self._text_focus_in(e.widget))
+        text_widget.bind("<FocusOut>", lambda e: self._text_focus_out(e.widget))
+
+    def _text_focus_in(self, text_widget):
+        if getattr(text_widget, "placeholder_activo", False):
+            text_widget.delete("1.0", tk.END)
+            text_widget.config(fg="#0f172a")
+            text_widget.placeholder_activo = False
+
+    def _text_focus_out(self, text_widget):
+        contenido = text_widget.get("1.0", tk.END).strip()
+        if not contenido:
+            text_widget.delete("1.0", tk.END)
+            text_widget.insert("1.0", text_widget.placeholder_text)
+            text_widget.config(fg=C_SUB)
+            text_widget.placeholder_activo = True
+
+    def _get_entry_value(self, entry):
+        """Obtiene valor real del Entry ignorando placeholder."""
+        if getattr(entry, "placeholder_activo", False):
+            return ""
+        return entry.get().strip()
+
+    def _get_text_value(self, text_widget):
+        """Obtiene valor real del Text ignorando placeholder."""
+        if getattr(text_widget, "placeholder_activo", False):
+            return ""
+        return text_widget.get("1.0", tk.END).strip()
+
     # ──────────────────────────────────────────────
     # Dibujo de cuadrículas
     # ──────────────────────────────────────────────
@@ -649,7 +683,7 @@ class AplicacionPolybiosClave(tk.Tk):
         self._pasos_constr = pasos_backup
 
         # Cifrado comparativo
-        texto = self.entry_plano.get("1.0", tk.END).strip()
+        texto = self._get_text_value(self.entry_plano)
         
         def _actualizar_txt(widget, contenido):
             widget.config(state=tk.NORMAL)
@@ -732,7 +766,7 @@ class AplicacionPolybiosClave(tk.Tk):
         self._actualizar_seguridad()
 
     def _generar_grid(self):
-        clave    = self.entry_clave.get().strip()
+        clave    = self._get_entry_value(self.entry_clave)
         modo_key = self._modo_key.get()
 
         # Mostrar clave normalizada (preview)
@@ -806,7 +840,7 @@ class AplicacionPolybiosClave(tk.Tk):
         if self._grid_clave is None:
             messagebox.showwarning("Sin cuadrícula", "Genera una cuadrícula con clave primero.")
             return
-        texto = self.entry_plano.get("1.0", tk.END).strip()
+        texto = self._get_text_value(self.entry_plano)
         if not texto:
             messagebox.showwarning("Sin texto", "Ingresa el texto a cifrar.")
             return
@@ -869,7 +903,7 @@ class AplicacionPolybiosClave(tk.Tk):
         if self._grid_clave is None:
             messagebox.showwarning("Sin cuadrícula", "Genera una cuadrícula con clave primero.")
             return
-        texto_c = self.entry_plano.get("1.0", tk.END).strip()
+        texto_c = self._get_text_value(self.entry_plano)
         if not texto_c:
             messagebox.showwarning("Sin texto", "Ingresa las coordenadas a descifrar.")
             return
@@ -936,6 +970,8 @@ class AplicacionPolybiosClave(tk.Tk):
                 self._modo_key.set(modo_key)
                 self.entry_clave.delete(0, tk.END)
                 self.entry_clave.insert(0, clave)
+                self.entry_clave.config(fg="#0f172a")
+                self.entry_clave.placeholder_activo = False
                 self._actualizar_modo()
                 self._generar_grid()
             except Exception as e:
