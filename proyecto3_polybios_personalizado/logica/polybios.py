@@ -21,13 +21,13 @@ PRESET_5x5_IJ = [
     ['V',  'W',  'X',  'Y',  'Z'],
 ]
 
-# 5×5 español: fusiona I/J, incluye Ñ, sin W
+# 5×5 español: fusiona I/J y V/W, incluye Ñ
 PRESET_5x5_NÑ = [
     ['A',  'B',  'C',  'D',  'E'],
     ['F',  'G',  'H',  'IJ', 'K'],
     ['L',  'M',  'N',  'Ñ',  'O'],
     ['P',  'Q',  'R',  'S',  'T'],
-    ['U',  'V',  'X',  'Y',  'Z'],
+    ['U',  'VW', 'X',  'Y',  'Z'],
 ]
 
 # 6×6: letras A-Z + Ñ (sin W) + dígitos 0-9 = 36 símbolos
@@ -42,7 +42,7 @@ PRESET_6x6 = [
 
 PRESETS = {
     '5x5_IJ':  {'grid': PRESET_5x5_IJ,  'nombre': '5×5 Clásico (I/J fusionados)'},
-    '5x5_NÑ':  {'grid': PRESET_5x5_NÑ,  'nombre': '5×5 Español (I/J, incluye Ñ, sin W)'},
+    '5x5_NÑ':  {'grid': PRESET_5x5_NÑ,  'nombre': '5×5 Español (I/J y V/W fusionados, incluye Ñ)'},
     '6x6':     {'grid': PRESET_6x6,      'nombre': '6×6 Extendido (letras + dígitos 0-9)'},
 }
 
@@ -177,8 +177,11 @@ def descifrar(texto_cifrado, grid):
             col  = int(token[1]) - 1
             if 0 <= fila < n and 0 <= col < n:
                 celda = grid[fila][col]
-                # En celdas fusionadas (IJ), devolvemos el primero por convención
-                letra = celda[0]
+                # En celdas fusionadas (como IJ o NÑ), mostramos la ambigüedad con corchetes [I/J]
+                if len(celda) > 1:
+                    letra = f"[{'/'.join(celda)}]"
+                else:
+                    letra = celda[0]
                 resultado.append(letra)
                 pasos.append({
                     'coord': token,

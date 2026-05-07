@@ -6,8 +6,9 @@
 # El desfase entre ellos permite que una misma letra se cifre diferente
 # en sucesivas apariciones.
 
-DISCO_EXT = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+DISCO_EXT = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 DISCO_INT = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+# DISCO_INT = "QWERTYUIOPASDFGHJKLZXCVBNM"
 
 def normalizar_texto(texto):
     """
@@ -17,9 +18,12 @@ def normalizar_texto(texto):
     res = ""
     for char in texto.upper():
         if char == " ":
-            res += "_"
-        elif char in DISCO_EXT:
-            res += char
+            char = "_"
+        if char in DISCO_EXT:
+            if res and res[-1] == char and char in DISCO_INT:
+                res += "Q"
+            else:
+                res += char
     return res
 
 def calcular_avance(pos_actual, char_objetivo, alfabeto):

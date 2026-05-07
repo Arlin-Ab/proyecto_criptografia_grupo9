@@ -178,11 +178,14 @@ class TestIDAVuelta:
         cifrado, _, _ = cifrar(texto, grid)
         desc, _, errores = descifrar(cifrado, grid)
         assert errores == []
-        # Las celdas fusionadas (IJ) pueden hacer que I→I, J→I: normalizar
-        assert desc.replace("J", "I") == texto.replace("J", "I")
+        # Las celdas fusionadas devuelven ambigüedad como [I/J] o [V/W], lo normalizamos para la aserción
+        desc_norm = desc.replace("[I/J]", "I").replace("[V/W]", "V")
+        texto_norm = texto.replace("J", "I").replace("W", "V")
+        assert desc_norm == texto_norm
 
     def test_grid_aleatorizado_ida_vuelta(self):
         grid = aleatorizar_grid(PRESET_5x5_IJ)
         cifrado, _, _ = cifrar("PRUEBA", grid)
         desc, _, _ = descifrar(cifrado, grid)
-        assert desc.replace("J", "I") == "PRUEBA"
+        desc_norm = desc.replace("[I/J]", "I").replace("[V/W]", "V")
+        assert desc_norm == "PRUEBA"
